@@ -11,7 +11,7 @@ st.set_page_config(page_title="ViralCheck", page_icon="📈", layout="centered")
 
 # --- Sidebar ---
 with st.sidebar:
-    st.image("static/sample.png", width=200)
+    st.image("static/icon.png", width=200)
     st.markdown("## 📊 ViralCheck")
     st.markdown("**Predict your next YouTube hit.**")
     st.markdown("Built with ❤️ by [@valm10](https://github.com/valm10)")

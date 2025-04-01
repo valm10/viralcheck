@@ -1,40 +1,77 @@
 import os
-from openai import OpenAI
+import logging
+from openai import OpenAI, OpenAIError, RateLimitError
 from dotenv import load_dotenv
+from PIL.Image import Image
+from utils.mock_predictor import get_mock_prediction
 
+# Load environment variables
 load_dotenv()
 
+# Configure logging
+logging.basicConfig(
+    format="%(asctime)s - [%(levelname)s] - %(message)s",
+    level=logging.INFO
+)
+
+# Get API key 
 api_key = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=api_key) if api_key else None
+GPT_AVAILABLE = api_key is not None
+client = OpenAI(api_key=api_key) if GPT_AVAILABLE else None
 
-def generate_title_suggestion(title: str) -> dict:
+
+def generate_prediction(title: str, image: Image) -> dict:
+
     if not client:
-        return {
-            "suggested_title": f"🔥 {title} | You Won't Believe This!",
-            "tip": "Use emotional or curiosity-driven hooks to boost clicks.",
-            "thumbnail_tip": "Add a human face with strong emotion in the center of the thumbnail."
-        }
+        logging.warning("No API key found. Falling back to mock prediction.")
+        return get_mock_prediction(title)
 
+    width, height = image.size
     prompt = f"""
-You are an expert in YouTube content strategy.
-Improve the title below to maximize virality. Then give one title tip and one thumbnail tip.
+You are a YouTube content strategist and viral video expert.
 
-Title: {title}
+1. Rewrite this video title to make it more clickable and engaging.
+2. Based on the thumbnail resolution ({width}x{height}), suggest one improvement.
 
-Format:
-Suggestion: <better title>
-Tip: <title improvement tip>
-Thumbnail: <thumbnail improvement tip>
+Original Title: {title}
+
+Respond using this exact format:
+Suggestion: <Improved title>
+Tip: <Copywriting tip>
+Thumbnail: <Thumbnail improvement tip>
 """
 
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": prompt.strip()}]
-    )
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt.strip()}]
+        )
 
-    content = response.choices[0].message.content.strip().split("\n")
-    return {
-        "suggested_title": content[0].replace("Suggestion:", "").strip(),
-        "tip": content[1].replace("Tip:", "").strip(),
-        "thumbnail_tip": content[2].replace("Thumbnail:", "").strip(),
-    }
+        content = response.choices[0].message.content.strip().split("\n")
+
+        suggestion = _extract_value(content, "Suggestion:")
+        tip = _extract_value(content, "Tip:")
+        thumbnail_tip = _extract_value(content, "Thumbnail:")
+
+        return {
+            "suggested_title": suggestion,
+            "tip": tip,
+            "thumbnail_tip": thumbnail_tip,
+            "score": 78,
+            "top_videos": get_mock_prediction(title)["top_videos"]
+        }
+
+    except (OpenAIError, RateLimitError) as e:
+        logging.error(f"OpenAI error: {e}")
+        return get_mock_prediction(title)
+    except Exception as e:
+        logging.exception("Unexpected error in GPT prediction.")
+        return get_mock_prediction(title)
+
+
+def _extract_value(lines: list, prefix: str) -> str:
+
+    for line in lines:
+        if line.strip().startswith(prefix):
+            return line.replace(prefix, "").strip()
+    return "Not provided."
