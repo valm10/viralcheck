@@ -11,8 +11,8 @@ st.set_page_config(
 )
 
 # --- Sidebar Branding ---
-with st.sidebar:
-    st.image("static/sample.png", width=180)
+def render_sidebar():
+    st.image("static/icon.png", width=180)
     st.markdown("## 🎥 ViralCheck")
     st.markdown("**Predict your YouTube video's viral potential using AI.**")
     st.markdown("Made with ❤️ by [@valm10](https://github.com/valm10)")
