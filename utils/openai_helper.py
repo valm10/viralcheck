@@ -1,6 +1,6 @@
 import os
 import logging
-from openai import OpenAI, OpenAIError, RateLimitError
+from openai import OpenAI, OpenAIError
 from dotenv import load_dotenv
 from PIL.Image import Image
 from utils.mock_predictor import get_mock_prediction
@@ -14,54 +14,47 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-# Get API key 
+# Initialize GPT client
 api_key = os.getenv("OPENAI_API_KEY")
 GPT_AVAILABLE = api_key is not None
 client = OpenAI(api_key=api_key) if GPT_AVAILABLE else None
 
 
 def generate_prediction(title: str, image: Image) -> dict:
+    """
+    Uses GPT-4o to rewrite a YouTube video title and give thumbnail feedback.
+    Falls back to mock data if API is not available or an error occurs.
 
+    Args:
+        title (str): YouTube video title
+        image (Image): PIL image object
+
+    Returns:
+        dict: prediction results (suggested title, tips, etc.)
+    """
     if not client:
-        logging.warning("No API key found. Falling back to mock prediction.")
+        logging.warning("⚠️ OpenAI client unavailable — using mock data.")
         return get_mock_prediction(title)
 
     width, height = image.size
-    prompt = f"""
-You are a YouTube content strategist and viral video expert.
-
-1. Rewrite this video title to make it more clickable and engaging.
-2. Based on the thumbnail resolution ({width}x{height}), suggest one improvement.
-
-Original Title: {title}
-
-Respond using this exact format:
-Suggestion: <Improved title>
-Tip: <Copywriting tip>
-Thumbnail: <Thumbnail improvement tip>
-"""
+    prompt = _build_prompt(title, width, height)
 
     try:
         response = client.chat.completions.create(
             model="gpt-4o",
-            messages=[{"role": "user", "content": prompt.strip()}]
+            messages=[{"role": "user", "content": prompt}]
         )
 
         content = response.choices[0].message.content.strip().split("\n")
-
-        suggestion = _extract_value(content, "Suggestion:")
-        tip = _extract_value(content, "Tip:")
-        thumbnail_tip = _extract_value(content, "Thumbnail:")
-
         return {
-            "suggested_title": suggestion,
-            "tip": tip,
-            "thumbnail_tip": thumbnail_tip,
+            "suggested_title": _extract(content, "Suggestion"),
+            "tip": _extract(content, "Tip"),
+            "thumbnail_tip": _extract(content, "Thumbnail"),
             "score": 78,
             "top_videos": get_mock_prediction(title)["top_videos"]
         }
 
-    except (OpenAIError, RateLimitError) as e:
+    except OpenAIError as e:
         logging.error(f"OpenAI error: {e}")
         return get_mock_prediction(title)
     except Exception as e:
@@ -69,9 +62,45 @@ Thumbnail: <Thumbnail improvement tip>
         return get_mock_prediction(title)
 
 
-def _extract_value(lines: list, prefix: str) -> str:
+def _build_prompt(title: str, width: int, height: int) -> str:
+    """
+    Builds the GPT prompt dynamically.
 
+    Args:
+        title (str): Original title
+        width (int): Thumbnail width
+        height (int): Thumbnail height
+
+    Returns:
+        str: The full prompt string
+    """
+    return f"""
+You are an expert in YouTube virality optimization.
+
+Given the following video title and thumbnail size, improve the title and give suggestions.
+
+Title: {title}
+Thumbnail size: {width}x{height}
+
+Reply in this format:
+Suggestion: <better title>
+Tip: <how to improve the title>
+Thumbnail: <suggestion for the thumbnail>
+""".strip()
+
+
+def _extract(lines: list, key: str) -> str:
+    """
+    Extracts a value from a GPT response line.
+
+    Args:
+        lines (list): GPT response lines
+        key (str): Prefix to match
+
+    Returns:
+        str: Extracted text, or fallback
+    """
     for line in lines:
-        if line.strip().startswith(prefix):
-            return line.replace(prefix, "").strip()
-    return "Not provided."
+        if line.strip().lower().startswith(key.lower()):
+            return line.split(":", 1)[-1].strip()
+    return "No response provided."
