@@ -13,6 +13,10 @@ Predict your next viral YouTube video — with AI-powered insights.
   - Title enhancement (via GPT)
   - Thumbnail ratio validation
   - Mock data for top-performing videos
+ 
+## 🖼 App Preview
+
+![Screenshot](static/sample.png)
 
 ---
 
