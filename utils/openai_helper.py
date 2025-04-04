@@ -83,6 +83,6 @@ def _extract(lines: list, key: str) -> str:
     """
     for line in lines:
         if line.strip().lower().startswith(key.lower()):
-            return line.split(":", 
-::contentReference[oaicite:0]{index=0}
+            return line.split(":", 1)[-1].strip()
+    return f"No {key.lower()} found."
  
