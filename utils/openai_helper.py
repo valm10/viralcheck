@@ -1,80 +1,74 @@
-# utils/openai_helper.py
-
 import os
 import logging
 from openai import OpenAI, OpenAIError
 from dotenv import load_dotenv
-from PIL import Image
-from utils.mock_predictor import get_mock_prediction
+from PIL.Image import Image
 from utils.youtube_scraper import search_youtube
 
-#Load environment variables
 load_dotenv()
 
-#Setup logging
 logging.basicConfig(
     format="%(asctime)s - [%(levelname)s] - %(message)s",
     level=logging.INFO
 )
 
-#Initialize OpenAI
 api_key = os.getenv("OPENAI_API_KEY")
 GPT_AVAILABLE = api_key is not None
 client = OpenAI(api_key=api_key) if GPT_AVAILABLE else None
 
 def generate_prediction(title: str, image: Image) -> dict:
-    """
-    Generate AI-based suggestions for a YouTube title and thumbnail.
-    Falls back to mock data if OpenAI fails or API key is not available.
-    """
-    if not client:
-        logging.warning("⚠️ OpenAI not available. Using mock prediction.")
-        return get_mock_prediction(title)
-
     width, height = image.size
     prompt = _build_prompt(title, width, height)
 
     try:
+        if not client:
+            logging.warning("⚠️ GPT client not available. Returning fallback.")
+            return _fallback_prediction(title)
+
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": prompt}]
         )
-        content = response.choices[0].message.content.strip().split("\n")
 
+        content = response.choices[0].message.content.strip().split("\n")
         return {
             "suggested_title": _extract(content, "Suggestion"),
             "tip": _extract(content, "Tip"),
             "thumbnail_tip": _extract(content, "Thumbnail"),
-            "score": 90,
             "top_videos": search_youtube(title)
-
         }
 
     except OpenAIError as e:
         logging.error(f"OpenAI error: {e}")
-        return get_mock_prediction(title)
-
+        return _fallback_prediction(title)
     except Exception as e:
-        logging.exception("Unexpected error")
-        return get_mock_prediction(title)
+        logging.exception("Unexpected error in prediction.")
+        return _fallback_prediction(title)
 
 def _build_prompt(title: str, width: int, height: int) -> str:
     return f"""
-You are a YouTube growth expert, focused on CPR.
+You're a YouTube content optimization expert.
 
-Given this video title and its thumbnail dimensions, provide suggestions to improve CTR.
+Given the title: {title}
+And thumbnail size: {width}x{height}
 
-Title: {title}
-Thumbnail size: {width}x{height}
+Improve the title and give tips:
 
-Respond with:
-Suggestion: <Better title>
-Tip: <Advice for title>
-Thumbnail: <Advice for thumbnail>
+Suggestion: <improved title>
+Tip: <title improvement tip>
+Thumbnail: <thumbnail tip>
 """.strip()
 
 def _extract(lines: list, key: str) -> str:
     for line in lines:
-        if line.lower().startswith(key.lower()):
+        if line.strip().lower().startswith(key.lower()):
             return line.split(":", 1)[-1].strip()
-    return f"No {key.lower()} found."
+    return "No data."
+
+def _fallback_prediction(title: str) -> dict:
+    return {
+        "suggested_title": f"{title} – The Unexpected Twist!",
+        "tip": "Use urgency or curiosity in your title for better clicks.",
+        "thumbnail_tip": "Use big text and emotion-driven faces.",
+        "top_videos": search_youtube(title)
+    }
