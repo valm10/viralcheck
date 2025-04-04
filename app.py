@@ -3,35 +3,26 @@ from PIL import Image, UnidentifiedImageError
 from utils.image_utils import check_aspect_ratio
 from utils.openai_helper import generate_prediction
 
-#Page Configuration
+# Page Configuration
 st.set_page_config(
     page_title="ViralCheck - YouTube Analyzer",
     page_icon="📈",
     layout="centered"
 )
 
-#App Title
+# Title
 st.title("🚀 ViralCheck")
-st.caption("Boost your YouTube video's performance with AI powered title and thumbnail suggestions.")
-
+st.caption("Boost your YouTube video's performance with AI-powered title and thumbnail suggestions.")
 st.divider()
 
-#User Input Section 
+# User Input
 st.header("🎬 Video Details")
-
-#Input for video title
 title_input = st.text_input("📌 Enter your YouTube video title")
-
-#File uploader for thumbnail image
-thumbnail_file = st.file_uploader(
-    "🖼️ Upload your video thumbnail (JPG or PNG)",
-    type=["jpg", "jpeg", "png"]
-)
+thumbnail_file = st.file_uploader("🖼️ Upload your video thumbnail (JPG or PNG)", type=["jpg", "jpeg", "png"])
 
 image = None
 is_valid = False
 
-#Process the uploaded thumbnail
 if thumbnail_file:
     try:
         image = Image.open(thumbnail_file)
@@ -49,11 +40,8 @@ if thumbnail_file:
         image = None
 
 st.divider()
-
-# --- Analysis Section ---
 st.header("📊 Viral Prediction")
 
-# Analyze button
 if st.button("🔍 Analyze with AI"):
     if not title_input:
         st.warning("⚠️ Please provide a video title.")
@@ -67,24 +55,20 @@ if st.button("🔍 Analyze with AI"):
 
         st.success("✅ Analysis complete!")
 
-        #Display AI suggestions
         st.subheader("💡 AI Suggestions")
         st.markdown(f"**📢 Improved Title:** `{result['suggested_title']}`")
         st.info(f"✍️ *Title Tip:* {result['tip']}")
         st.info(f"🖼️ *Thumbnail Tip:* {result['thumbnail_tip']}")
 
-        #Display top similar videos
         st.subheader("📈 Top Similar Videos")
-        for video in result["top_videos"]:
-            st.markdown(f"- **{video['title']}** — Score: {video['score']}/100")
+    for video in result["top_videos"]:
+        title = video.get("title", "Untitled")
+        url = video.get("url")
 
-        for video in result["top_videos"]:
-            st.markdown(f"""
-            **[{video['title']}]({video['url']})**  
-            By: `{video['channel']}`  
-            👁️ {video['views']:,} views  
----
-""")
+    if url:
+        st.markdown(f"- 🔗 **[{title}]({url})**")
+    else:
+        st.markdown(f"- **{title}**")
 
 
 st.divider()
