@@ -2,6 +2,8 @@ import streamlit as st
 from PIL import Image
 from utils.image_utils import check_aspect_ratio
 from utils.mock_predictor import get_mock_prediction
+from utils.openai_helper import generate_prediction
+
 
 
 #Page config (tab title and layout)
@@ -38,9 +40,9 @@ if thumbnail_file:
         st.success("✅ Thumbnail is in 16:9 format.")
     else:
         st.warning("⚠️ Thumbnail is NOT 16:9 (e.g., 1280x720).")
-
-if title_input and st.button("🧪 Simulate Virality Check")
-    result = get_mock_prediction(title_input)
+        
+    if title_input and st.button("🧪 Simulate Virality Check")
+        result = generate_prediction(title_input, image)
         st.subheader("🔮 Mock Prediction")
         st.markdown(f"**Suggested Title:** `{result['suggested_title']}`")
         st.info(f"💡 Tip: {result['tip']}")
