@@ -1,7 +1,7 @@
 # 📈 ViralCheck – YouTube Viral Analyzer
 
 Boost your YouTube video's chance of success with AI.  
-🎯 Predict virality, improve titles, and get thumbnail tips – instantly.
+🎯 Predict virality, improve titles, and thumbnail tips.
 
 ![Demo](assets/demo.gif)
 
