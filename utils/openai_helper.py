@@ -4,6 +4,8 @@ from openai import OpenAI, OpenAIError, APIConnectionError, AuthenticationError,
 from dotenv import load_dotenv
 from PIL import Image
 from utils.mock_predictor import get_mock_prediction
+from utils.youtube_scraper import search_youtube
+
 
 #Load variables
 load_dotenv()
@@ -43,7 +45,7 @@ def generate_prediction(title: str, image: Image) -> dict:
             "tip": _extract(content, "Tip"),
             "thumbnail_tip": _extract(content, "Thumbnail"),
             "score": 78,
-            "top_videos": get_mock_prediction(title)["top_videos"]
+            "top_videos": search_youtube(title)
         }
 
     except APIConnectionError as e:

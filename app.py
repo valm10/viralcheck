@@ -3,26 +3,26 @@ from PIL import Image, UnidentifiedImageError
 from utils.image_utils import check_aspect_ratio
 from utils.openai_helper import generate_prediction
 
-# --- Page Configuration ---
+#Page Configuration
 st.set_page_config(
     page_title="ViralCheck - YouTube Analyzer",
     page_icon="📈",
     layout="centered"
 )
 
-# --- App Title ---
+#App Title
 st.title("🚀 ViralCheck")
 st.caption("Boost your YouTube video's performance with AI powered title and thumbnail suggestions.")
 
 st.divider()
 
-# --- User Input Section ---
+#User Input Section 
 st.header("🎬 Video Details")
 
-# Input for video title
+#Input for video title
 title_input = st.text_input("📌 Enter your YouTube video title")
 
-# File uploader for thumbnail image
+#File uploader for thumbnail image
 thumbnail_file = st.file_uploader(
     "🖼️ Upload your video thumbnail (JPG or PNG)",
     type=["jpg", "jpeg", "png"]
@@ -31,7 +31,7 @@ thumbnail_file = st.file_uploader(
 image = None
 is_valid = False
 
-# Process the uploaded thumbnail
+#Process the uploaded thumbnail
 if thumbnail_file:
     try:
         image = Image.open(thumbnail_file)
@@ -67,16 +67,25 @@ if st.button("🔍 Analyze with AI"):
 
         st.success("✅ Analysis complete!")
 
-        # Display AI suggestions
+        #Display AI suggestions
         st.subheader("💡 AI Suggestions")
         st.markdown(f"**📢 Improved Title:** `{result['suggested_title']}`")
         st.info(f"✍️ *Title Tip:* {result['tip']}")
         st.info(f"🖼️ *Thumbnail Tip:* {result['thumbnail_tip']}")
 
-        # Display top similar videos
+        #Display top similar videos
         st.subheader("📈 Top Similar Videos")
         for video in result["top_videos"]:
             st.markdown(f"- **{video['title']}** — Score: {video['score']}/100")
+
+        for video in result["top_videos"]:
+            st.markdown(f"""
+            **[{video['title']}]({video['url']})**  
+            By: `{video['channel']}`  
+            👁️ {video['views']:,} views  
+---
+""")
+
 
 st.divider()
 st.caption("Made by [@valm10](https://github.com/valm10) · Powered by Streamlit")

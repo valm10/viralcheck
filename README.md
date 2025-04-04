@@ -22,7 +22,6 @@ Boost your YouTube video's chance of success with AI.
 ![Streamlit](https://img.shields.io/badge/Framework-Streamlit-red)
 ![OpenAI](https://img.shields.io/badge/API-OpenAI-0055ff)
 ![Python](https://img.shields.io/badge/Language-Python-blue)
-![License](https://img.shields.io/github/license/valm10/viralcheck)
 
 ---
 
